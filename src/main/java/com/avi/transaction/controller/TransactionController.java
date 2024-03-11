@@ -11,12 +11,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
-import java.util.Currency;
 import java.util.List;
 import java.util.UUID;
 
-import static com.avi.transaction.model.Transaction.*;
+import static com.avi.transaction.model.Transaction.TransactionType;
 
 @RestController
 @RequestMapping("/api/transactions")
@@ -64,13 +62,6 @@ public class TransactionController {
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/amount-in-currency/{id}")
-    @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity<BigDecimal> getTransactionAmountInCurrency(@PathVariable UUID id,
-                                                                     @RequestParam Currency currency) {
-        return ResponseEntity.ok(transactionService.getTransactionAmountInCurrency(id, currency));
-    }
-
     @GetMapping("/summary")
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<TransactionSummary> getTransactionsSummary() {
@@ -85,6 +76,5 @@ public class TransactionController {
 
         return ResponseEntity.status(ex.getStatus()).body(errorResponse);
     }
-
 
 }
