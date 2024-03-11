@@ -21,7 +21,7 @@ import static com.avi.transaction.model.Transaction.TransactionType;
 @RequiredArgsConstructor
 
 public class TransactionController {
-    private TransactionServiceImpl transactionService;
+    private final TransactionServiceImpl transactionService;
 
 
     @GetMapping
