@@ -1,5 +1,6 @@
 package com.avi.transaction.service;
 
+import com.avi.transaction.dto.BetweenDatesRequest;
 import com.avi.transaction.dto.TransactionRequest;
 import com.avi.transaction.dto.TransactionResponse;
 import com.avi.transaction.dto.TransactionSummary;
@@ -12,8 +13,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
-import java.util.UUID;
 
 @Service
 @Slf4j
@@ -23,21 +24,68 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     public List<TransactionResponse> getTransactions() {
-        return transactionRepository.findAll().stream()
+        List<TransactionResponse> transactionResponseList = transactionRepository.findAll().stream()
                 .map(this::convertToTransactionResponse)
                 .toList();
+
+        if (transactionResponseList.isEmpty()) {
+            log.info("No transactions at all!");
+            throw new TransactionException("No transactions at all!", HttpStatus.NO_CONTENT);
+        }
+
+        return transactionResponseList;
     }
 
     @Override
-    public List<TransactionResponse> getTransactionsByType(Transaction.TransactionType type) {
-        return transactionRepository.findAllByType(type).stream()
+    public List<TransactionResponse> getTransactionsByType(String type) {
+        List<TransactionResponse> transactionResponseList = transactionRepository.findAllByType(type).stream()
                 .map(this::convertToTransactionResponse)
                 .toList();
+
+        if (transactionResponseList.isEmpty()) {
+            log.info("No transactions for type: {}", type);
+            throw new TransactionException("No transactions for type: " + type, HttpStatus.NO_CONTENT);
+        }
+
+        return transactionResponseList;
     }
 
     @Override
-    public TransactionResponse getTransaction(UUID id) {
+    public TransactionResponse getTransaction(Long id) {
         return convertToTransactionResponse(getTransactionModel(id));
+    }
+
+    public List<TransactionResponse> getTransactionsGEAmount(BigDecimal amount) {
+        List<TransactionResponse> transactionResponseList = transactionRepository.findByAmountGreaterThanEqual(amount)
+                .stream()
+                .map(this::convertToTransactionResponse)
+                .toList();
+
+        if (transactionResponseList.isEmpty()) {
+            log.info("No transactions that are greater or equal amount: {}", amount);
+            throw new TransactionException("No transactions that are greater or equal amount: " + amount, HttpStatus.NO_CONTENT);
+        }
+
+        return transactionResponseList;
+
+    }
+
+    public List<TransactionResponse> getTransactionBetweenDates(BetweenDatesRequest betweenDatesRequest) {
+        LocalDate from = betweenDatesRequest.getFrom();
+        LocalDate to = betweenDatesRequest.getTo();
+
+        List<TransactionResponse> transactionResponseList = transactionRepository
+                .findByDateBetween(from, to).stream()
+                .map(this::convertToTransactionResponse)
+                .toList();
+
+        if (transactionResponseList.isEmpty()) {
+            log.info("No transactions between dates:{} to {}", from, to);
+            throw new TransactionException(String.format("No transactions between dates:%s to %s", from, to),
+                    HttpStatus.NO_CONTENT);
+        }
+
+        return transactionResponseList;
     }
 
     @Override
@@ -60,7 +108,7 @@ public class TransactionServiceImpl implements TransactionService {
 
 
     @Override
-    public TransactionResponse updateTransaction(UUID id, TransactionRequest transactionRequest) {
+    public TransactionResponse updateTransaction(Long id, TransactionRequest transactionRequest) {
         Transaction transaction = getTransactionModel(id);
         try {
             setModelWithRequest(transactionRequest, transaction);
@@ -78,25 +126,34 @@ public class TransactionServiceImpl implements TransactionService {
 
 
     @Override
-    public void deleteTransaction(UUID id) {
+    public void deleteTransaction(Long id) {
         transactionRepository.deleteById(id);
     }
 
     @Override
     public TransactionSummary getTransactionsSummary() {
-        // Implement the logic to calculate totalDebit, totalCredit, and netBalance
-        BigDecimal totalDebit = BigDecimal.ZERO; // Placeholder for calculation
-        BigDecimal totalCredit = BigDecimal.ZERO; // Placeholder for calculation
-        BigDecimal netBalance = totalCredit.subtract(totalDebit);
 
-        return new TransactionSummary(totalDebit, totalCredit, netBalance);
+        List<Transaction> creditTransactions = transactionRepository.findAllByType("credit");
+        List<Transaction> debitTransactions = transactionRepository.findAllByType("debit");
+
+        BigDecimal totalCredit = creditTransactions.stream()
+                .map(Transaction::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal totalDebit = debitTransactions.stream()
+                .map(Transaction::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal netBalance = totalCredit.add(totalDebit);
+
+        return new TransactionSummary(totalCredit, totalDebit, netBalance);
     }
 
-    private Transaction getTransactionModel(UUID id) {
+    private Transaction getTransactionModel(Long id) {
         return transactionRepository.findById(id)
                 .orElseThrow(() -> {
                     log.error("Transaction with id {} doesn't exist", id);
-                    return new TransactionException("Transaction Doesn't exist!", HttpStatus.NOT_FOUND);
+                    return new TransactionException("Transaction doesn't exist!", HttpStatus.NOT_FOUND);
                 });
     }
 
@@ -111,7 +168,7 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     private void setModelWithRequest(TransactionRequest transactionRequest, Transaction transaction) {
-        transaction.setType(transactionRequest.getType());
+        transaction.setType(transactionRequest.getType().toLowerCase());
         transaction.setAmount(transactionRequest.getAmount());
         transaction.setDescription(transactionRequest.getDescription());
         transaction.setDate(transactionRequest.getTransactionDate());

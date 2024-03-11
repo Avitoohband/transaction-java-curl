@@ -1,20 +1,17 @@
 package com.avi.transaction.controller;
 
-import com.avi.transaction.dto.TransactionExceptionResponse;
+import com.avi.transaction.dto.BetweenDatesRequest;
 import com.avi.transaction.dto.TransactionRequest;
 import com.avi.transaction.dto.TransactionResponse;
 import com.avi.transaction.dto.TransactionSummary;
-import com.avi.transaction.exception.TransactionException;
 import com.avi.transaction.service.TransactionServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
-import java.util.UUID;
-
-import static com.avi.transaction.model.Transaction.TransactionType;
 
 @RestController
 @RequestMapping("/api/transactions")
@@ -30,16 +27,28 @@ public class TransactionController {
         return ResponseEntity.ok(transactionService.getTransactions());
     }
 
-    @GetMapping("/type/{type}")
+    @GetMapping("/type")
     @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity<List<TransactionResponse>> getTransactionsByType(@PathVariable TransactionType type) {
+    public ResponseEntity<List<TransactionResponse>> getTransactionsByType(@RequestParam String type) {
         return ResponseEntity.ok(transactionService.getTransactionsByType(type));
+    }
+
+    @GetMapping("/amount")
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<List<TransactionResponse>> getTransactionsGEAmount(@RequestParam BigDecimal amount) {
+        return ResponseEntity.ok(transactionService.getTransactionsGEAmount(amount));
     }
 
     @GetMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity<TransactionResponse> getTransaction(@PathVariable UUID id) {
+    public ResponseEntity<TransactionResponse> getTransaction(@PathVariable Long id) {
         return ResponseEntity.ok(transactionService.getTransaction(id));
+    }
+
+    @GetMapping("/dates")
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<List<TransactionResponse>> getTransactionBetweenDates(@RequestBody BetweenDatesRequest betweenDatesRequest) {
+        return ResponseEntity.ok(transactionService.getTransactionBetweenDates(betweenDatesRequest));
     }
 
     @PostMapping
@@ -50,14 +59,14 @@ public class TransactionController {
 
     @PutMapping("/{id}")
     @ResponseStatus(HttpStatus.CREATED)
-    public ResponseEntity<TransactionResponse> updateTransaction(@PathVariable UUID id,
+    public ResponseEntity<TransactionResponse> updateTransaction(@PathVariable Long id,
                                                                  @RequestBody TransactionRequest transactionRequest) {
         return ResponseEntity.ok(transactionService.updateTransaction(id, transactionRequest));
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public ResponseEntity<Void> deleteTransaction(@PathVariable UUID id) {
+    public ResponseEntity<Void> deleteTransaction(@PathVariable Long id) {
         transactionService.deleteTransaction(id);
         return ResponseEntity.noContent().build();
     }
@@ -66,15 +75,6 @@ public class TransactionController {
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<TransactionSummary> getTransactionsSummary() {
         return ResponseEntity.ok(transactionService.getTransactionsSummary());
-    }
-
-    @ExceptionHandler()
-    private ResponseEntity<TransactionExceptionResponse> handleException(TransactionException ex) {
-        TransactionExceptionResponse errorResponse = new TransactionExceptionResponse(
-                ex.getStatus().value(), ex.getMessage()
-        );
-
-        return ResponseEntity.status(ex.getStatus()).body(errorResponse);
     }
 
 }

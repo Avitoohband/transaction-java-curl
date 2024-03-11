@@ -5,7 +5,6 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.UUID;
 
 @Entity
 @Getter
@@ -15,15 +14,11 @@ import java.util.UUID;
 @Builder
 public class Transaction {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
-    private TransactionType type; // "debit" or "credit"
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String type;
     private BigDecimal amount;
     private String description;
     @Column(name = "transaction_date")
     private LocalDate date;
-
-    public enum TransactionType {
-        DEBIT, CREDIT
-    }
 }

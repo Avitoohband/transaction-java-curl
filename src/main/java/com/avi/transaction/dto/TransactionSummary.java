@@ -11,8 +11,8 @@ import java.math.BigDecimal;
 @Setter
 @Builder
 public class TransactionSummary {
-    private BigDecimal totalDebit;
     private BigDecimal totalCredit;
+    private BigDecimal totalDebit;
     private BigDecimal netBalance;
 }
 
