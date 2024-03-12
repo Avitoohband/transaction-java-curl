@@ -153,3 +153,7 @@ using cURL commands:
 * Visit http://localhost:8080/swagger-ui/index.html for more API information.</br>
 * Try using this postman
 collection [TransactionCurlAPi.postman_collection.json](TransactionCurlAPi.postman_collection.json)
+
+## Notes
+* Docker still hasn't tested.
+* The currency EP won't work because of paid subscription, see further comments inside the service.

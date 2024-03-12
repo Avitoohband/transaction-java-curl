@@ -152,14 +152,14 @@ public class TransactionServiceImpl implements TransactionService {
         return new TransactionSummary(totalCredit, totalDebit, netBalance);
     }
 
+    // please read comment inside currencyConversionService
     @Override
     public BigDecimal getTransactionAmountInCurrency(Long id, Currency currency) {
-        return null;
         Transaction transaction = getTransactionModel(id);
 
         try {
             BigDecimal transactionAmount = transaction.getAmount();
-            BigDecimal conversionRate = currencyConversionService.getConversionRate(transactionCurrency, currency);
+            BigDecimal conversionRate = currencyConversionService.getConversionRate(currency);
 
             return transactionAmount.multiply(conversionRate);
         } catch (Exception ex) {

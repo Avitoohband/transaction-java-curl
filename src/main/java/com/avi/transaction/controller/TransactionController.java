@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.util.Currency;
 import java.util.List;
 
 @RestController
@@ -49,6 +50,13 @@ public class TransactionController {
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<List<TransactionResponse>> getTransactionBetweenDates(@RequestBody BetweenDatesRequest betweenDatesRequest) {
         return ResponseEntity.ok(transactionService.getTransactionBetweenDates(betweenDatesRequest));
+    }
+
+    @GetMapping("/amount-in-currency/{id}")
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<BigDecimal> getTransactionAmountInCurrency(@PathVariable Long id,
+                                                                     @RequestParam Currency currency) {
+        return ResponseEntity.ok(transactionService.getTransactionAmountInCurrency(id, currency));
     }
 
     @PostMapping

@@ -25,9 +25,12 @@ public class CurrencyConversionServiceImpl implements CurrencyConversionService 
     @Value("${currency.conversion.api.key}")
     private String apiKey;
 
+    /*
+    * It won't work because of paid subscription, to make it work remove base param from the url.
+    * */
     @Override
-    public BigDecimal getConversionRate(Currency fromCurrency, Currency toCurrency) {
-        String requestUrl = String.format("%s?access_key=%s", apiUrl, apiKey);
+    public BigDecimal getConversionRate(Currency toCurrency) {
+        String requestUrl = String.format("%s?access_key=%s&base=ILS", apiUrl, apiKey);
 
         try {
             CurrencyConversionResponse response = restTemplate.getForObject(requestUrl, CurrencyConversionResponse.class);
@@ -39,8 +42,8 @@ public class CurrencyConversionServiceImpl implements CurrencyConversionService 
             if (response.getRates().containsKey(toCurrency.toString())) {
                 return response.getRates().get(toCurrency.toString());
             } else {
-                log.error("Unable to fetch rate of: {}", toCurrency.toString());
-                throw new CurrencyConversionException("Unable to fetch rate of: " + toCurrency.toString(),
+                log.error("Unable to fetch rate of: {}", toCurrency);
+                throw new CurrencyConversionException("Unable to fetch rate of: " + toCurrency,
                         HttpStatus.BAD_REQUEST);
             }
         } catch (Exception ex) {
