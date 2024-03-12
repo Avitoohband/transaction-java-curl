@@ -125,7 +125,7 @@ using cURL commands:
 * Delete a transaction: </br>```curl -X DELETE http://localhost:8080/api/transactions/{id}```
   </br>Replace {id} with the ID of the transaction you wish to delete.
 
-## Notes
+## References
 
 * Visit http://localhost:8080/swagger-ui/index.html for more API information.</br>
 * Try using this postman
