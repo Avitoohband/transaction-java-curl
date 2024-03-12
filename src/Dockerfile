@@ -12,6 +12,7 @@ COPY settings.gradle .
 
 # Copy the source code of your application
 COPY src src
+COPY /build/libs/*.jar /app.jar
 
 # Give execute permissions to the Gradle wrapper
 RUN chmod +x ./gradlew

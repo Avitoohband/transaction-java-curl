@@ -98,6 +98,29 @@ INSERT INTO transaction (type, amount, description, transaction_date) VALUES
 
 The application should now be running on http://localhost:8080.
 
+### Running with Docker
+This project can be easily run inside a Docker container. Follow these steps to build and run the project using Docker.
+
+#### Prerequisites
+Ensure you have Docker installed and running on your machine. You can download Docker from docker.com.
+
+#### Building the Docker Image
+Navigate to the root directory of the project where the Dockerfile is located.
+
+Build the Docker image with the following command:
+
+```bash
+docker build -t transaction-java-curl .
+```
+Replace transaction-java-curl with a name of your choice for the Docker image.
+
+#### Running the Docker Container
+After building the image, you can run a container based on that image:
+
+```bash
+docker run -p 9090:9090 transaction-java-curl
+```
+
 ## API
 
 Usage
@@ -125,7 +148,7 @@ using cURL commands:
 * Delete a transaction: </br>```curl -X DELETE http://localhost:8080/api/transactions/{id}```
   </br>Replace {id} with the ID of the transaction you wish to delete.
 
-## Notes
+## References
 
 * Visit http://localhost:8080/swagger-ui/index.html for more API information.</br>
 * Try using this postman
