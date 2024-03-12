@@ -6,6 +6,7 @@ import com.avi.transaction.dto.TransactionResponse;
 import com.avi.transaction.dto.TransactionSummary;
 
 import java.math.BigDecimal;
+import java.util.Currency;
 import java.util.List;
 
 public interface TransactionService {
@@ -25,5 +26,6 @@ public interface TransactionService {
 
     void deleteTransaction(Long id);
 
+    BigDecimal getTransactionAmountInCurrency (Long id, Currency currency);
     TransactionSummary getTransactionsSummary();
 }

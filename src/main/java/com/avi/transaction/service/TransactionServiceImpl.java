@@ -4,6 +4,7 @@ import com.avi.transaction.dto.BetweenDatesRequest;
 import com.avi.transaction.dto.TransactionRequest;
 import com.avi.transaction.dto.TransactionResponse;
 import com.avi.transaction.dto.TransactionSummary;
+import com.avi.transaction.exception.CurrencyConversionException;
 import com.avi.transaction.exception.TransactionException;
 import com.avi.transaction.model.Transaction;
 import com.avi.transaction.repository.TransactionRepository;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Currency;
 import java.util.List;
 
 @Service
@@ -21,6 +23,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class TransactionServiceImpl implements TransactionService {
     private final TransactionRepository transactionRepository;
+    private final CurrencyConversionService currencyConversionService;
 
     @Override
     public List<TransactionResponse> getTransactions() {
@@ -147,6 +150,23 @@ public class TransactionServiceImpl implements TransactionService {
         BigDecimal netBalance = totalCredit.add(totalDebit);
 
         return new TransactionSummary(totalCredit, totalDebit, netBalance);
+    }
+
+    @Override
+    public BigDecimal getTransactionAmountInCurrency(Long id, Currency currency) {
+        return null;
+        Transaction transaction = getTransactionModel(id);
+
+        try {
+            BigDecimal transactionAmount = transaction.getAmount();
+            BigDecimal conversionRate = currencyConversionService.getConversionRate(transactionCurrency, currency);
+
+            return transactionAmount.multiply(conversionRate);
+        } catch (Exception ex) {
+            log.error("Currency conversion exception: " + ex.getMessage());
+            throw new CurrencyConversionException("Could not convert: " + ex.getMessage(),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     private Transaction getTransactionModel(Long id) {
