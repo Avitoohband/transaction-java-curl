@@ -101,11 +101,11 @@ public class TransactionServiceImpl implements TransactionService {
             return convertToTransactionResponse(transaction);
 
         } catch (Exception ex) {
-            throwCouldNotSaveException(ex);
+            log.error("Transaction could not be saved: " + ex.getMessage());
+            throw new TransactionException("Transaction could not be saved: " + ex.getMessage(),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return null;
     }
-
 
     @Override
     public TransactionResponse updateTransaction(Long id, TransactionRequest transactionRequest) {
@@ -119,34 +119,49 @@ public class TransactionServiceImpl implements TransactionService {
             return convertToTransactionResponse(transaction);
 
         } catch (Exception ex) {
-            throwCouldNotSaveException(ex);
+            log.error("Transaction could not be saved: " + ex.getMessage());
+            throw new TransactionException("Transaction could not be saved: " + ex.getMessage(),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return null;
     }
 
 
     @Override
     public void deleteTransaction(Long id) {
-        transactionRepository.deleteById(id);
+        if (!transactionRepository.existsById(id)) {
+            log.error("Transaction with id {} doesn't exist", id);
+            throw new TransactionException("Transaction doesn't exist!", HttpStatus.NOT_FOUND);
+        }
+        try {
+            transactionRepository.deleteById(id);
+        } catch (Exception ex) {
+            log.error("Could not delete transaction with id {}: {}", id, ex.getMessage());
+            throw new TransactionException("Could not delete transaction", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @Override
     public TransactionSummary getTransactionsSummary() {
+        try {
+            List<Transaction> creditTransactions = transactionRepository.findAllByType("credit");
+            List<Transaction> debitTransactions = transactionRepository.findAllByType("debit");
 
-        List<Transaction> creditTransactions = transactionRepository.findAllByType("credit");
-        List<Transaction> debitTransactions = transactionRepository.findAllByType("debit");
+            BigDecimal totalCredit = creditTransactions.stream()
+                    .map(Transaction::getAmount)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal totalCredit = creditTransactions.stream()
-                .map(Transaction::getAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal totalDebit = debitTransactions.stream()
+                    .map(Transaction::getAmount)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal totalDebit = debitTransactions.stream()
-                .map(Transaction::getAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal netBalance = totalCredit.add(totalDebit);
 
-        BigDecimal netBalance = totalCredit.add(totalDebit);
+            return new TransactionSummary(totalCredit, totalDebit, netBalance);
 
-        return new TransactionSummary(totalCredit, totalDebit, netBalance);
+        } catch (Exception ex) {
+            log.error("Error calculating transactions summary: {}", ex.getMessage(), ex);
+            throw new TransactionException("Error calculating transactions summary", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     private Transaction getTransactionModel(Long id) {
@@ -172,11 +187,5 @@ public class TransactionServiceImpl implements TransactionService {
         transaction.setAmount(transactionRequest.getAmount());
         transaction.setDescription(transactionRequest.getDescription());
         transaction.setDate(transactionRequest.getTransactionDate());
-    }
-
-    private void throwCouldNotSaveException(Exception ex) {
-        log.error("Transaction could not be saved: " + ex.getMessage());
-        throw new TransactionException("Transaction could not be saved: " + ex.getMessage(),
-                HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }
